@@ -12,17 +12,12 @@ impl BigNum {
     fn add(&mut self, other: &Self) {
         let self_len = self.0.len();
         let other_len = other.0.len();
-        let total_len = self_len.max(other_len + 1);
-        if self_len < other_len {
-            self.resize(total_len + 1);
-        }
+        let total_len = self_len.max(other_len);
+        self.resize(total_len + 1);
 
         let mut index: usize = 0;
         let mut carry: u128 = 0;
-        loop {
-            if index >= total_len {
-                break;
-            }
+        while index < total_len {
             let a = (self.0.get(index).copied().unwrap_or(0)) as u128;
             let b = (other.0.get(index).copied().unwrap_or(0)) as u128;
             let s = a + b + carry;
@@ -31,7 +26,11 @@ impl BigNum {
             self.0[index] = res;
             index += 1;
         }
-        self.0[index] = carry as u64;
+        if carry > 0 {
+            self.0[index] = carry as u64;
+        } else {
+            self.0.truncate(index);
+        }
     }
 }
 
@@ -54,8 +53,9 @@ mod tests {
 
     #[test]
     fn add_numbers() {
-        let n = BigNum::new(13);
+        let mut n = BigNum::new(13);
         let m = BigNum::new(13);
-        assert_eq!(n.0, vec![13u64]);
+        n.add(&m);
+        assert_eq!(n.0, vec![26u64]);
     }
 }
